@@ -28,8 +28,8 @@ const getVertexBuffer = (device) => {
   const vertexArray = new Float32Array([
     // 三角形三个顶点坐标的x、y、z值
     0.0, 0.0, 0.0,//顶点1坐标
-    1.0, 0.0, 0.0,//顶点2坐标
-    0.0, 1.0, 0.0,//顶点3坐标
+    0.5, 0.0, 0.0,//顶点2坐标
+    0.0, 0.5, 0.0,//顶点3坐标
   ]);
   // 在gpu显存中创建一个缓冲区（顶点缓冲区）
   const vertexBuffer = device.createBuffer({
@@ -132,8 +132,10 @@ onMounted(async () => {
 </script>
 
 <template>
-
+<div>
+  <h3>画一个三角形</h3>
   <canvas ref="canvas" class="container" />
+</div>
 </template>
 
 <style scoped>
