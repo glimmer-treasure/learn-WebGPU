@@ -3,7 +3,9 @@
         "baseUrl": ".",
         "paths": {
             "src/*": ["./src/*"]
-        }
+        },
+        "typeRoots": ["./node_modules/@webgpu/types", "./node_modules/@types"],
+        "checkJs": true,
     },
     "exclude": [
         "node_modules"
