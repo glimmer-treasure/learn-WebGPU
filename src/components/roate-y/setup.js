@@ -89,21 +89,18 @@ export default function (props, context) {
     return vertexBuffer
   }
   /**
-   * 获取uniform缓冲区对象
-   * @returns {GPUBuffer} uniform缓冲区对象
+   * 更新旋转矩阵，并写入GPU缓冲区
    */
-  const getUniformBuffer = () => {
+  const updateRoationMatrix = () => {
     // 更新旋转矩阵缓冲区
     device.queue.writeBuffer(matrixBuffer.roation, 0, getRotationYMatrix(angle))
     angle = (angle + step) % 360;
-    return matrixBuffer.roation
   }
   /**
    * @param {GPURenderPipeline} pipeline 渲染管线
    * @returns {GPUBindGroup} GPUBindGroup
    */
   const getBindGroup = (pipeline) => {
-    getUniformBuffer()
     return device.createBindGroup({
       layout: pipeline.getBindGroupLayout(0),
       entries: [
@@ -175,11 +172,12 @@ export default function (props, context) {
    * 执行gpu渲染的方法
    * @param {object} param0 参数对象
    * @param {GPURenderPipeline}  param0.renderPipeline GPU渲染管线
+   * @param {GPUBindGroup}  param0.bindGroup bindGroup
    * @param {GPUCanvasContext} param0.context GPUCanvasContext
    * @param {GPUBuffer} param0.vertexBuffer 顶点缓冲区对象
    */
-  const gpuRender = ({ renderPipeline, context, vertexBuffer }) => {
-    const bindGroup = getBindGroup(renderPipeline)
+  const gpuRender = ({ renderPipeline, bindGroup, context, vertexBuffer }) => {
+    updateRoationMatrix()
     // 创建GPU命令编码器对象
     const commandEncoder = device.createCommandEncoder();
     // 创建渲染通道
@@ -211,11 +209,15 @@ export default function (props, context) {
     const commandBuffer = commandEncoder.finish();
     // 命令编码器缓冲区中命令传入GPU设备对象的命令队列.queue
     device.queue.submit([commandBuffer]);
-    requestAnimationFrame(() => gpuRender({ renderPipeline, context, vertexBuffer }))
+    requestAnimationFrame(() => gpuRender({ renderPipeline, bindGroup, context, vertexBuffer }))
   }
   onMounted(() => {
     device.queue.writeBuffer(matrixBuffer.translation, 0, getTranslationMatrix(0, 0, 0.5))
-    gpuRender({renderPipeline: getRenderPipeline(), context: getWebgpuContext(), vertexBuffer: getVertexBuffer()})
+    const renderPipeline = getRenderPipeline()
+    const bindGroup = getBindGroup(renderPipeline)
+    const context = getWebgpuContext()
+    const vertexBuffer = getVertexBuffer()
+    gpuRender({renderPipeline, bindGroup, context, vertexBuffer})
   })
   return {
     canvas
