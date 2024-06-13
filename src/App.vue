@@ -1,19 +1,29 @@
 <script setup>
-import { ref } from 'vue'
+import useWebGpu from 'src/js/useWebGpu.js'
 import DrawRectangle from 'src/components/draw-rectangle.vue';
 import DrawTriangle from 'src/components/draw-triangle.vue';
+import RoateY from 'src/components/roate-y/index.vue'
 
-const hasWebGpu = ref(!!navigator.gpu)
+const webgpu = useWebGpu()
+
+console.log('webgpu', webgpu)
 
 </script>
 
 <template>
-  <template v-if="hasWebGpu">
+  <template v-if="webgpu.device.value">
+    <RoateY />
     <DrawRectangle />
     <DrawTriangle />
   </template>
-  <WebGPU v-if="hasWebGpu" />
   <div v-else>
     该浏览器不支持WebGPU
   </div>
 </template>
+
+<style>
+canvas.container {
+  width: 640px;
+  height: 640px;
+}
+</style>

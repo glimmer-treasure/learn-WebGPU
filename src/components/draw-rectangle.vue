@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { vertex, fragment } from 'src/js/wgsl.js'
+import { getRectangle } from 'src/js/vertex.js';
 
 const canvas = ref(null)
 
@@ -25,15 +26,7 @@ const getGpuDevice = async () => {
  * @returns {GPUBuffer} 顶点缓冲区对象
  */
 const getVertexBuffer = (device) => {
-  const vertexArray = new Float32Array([
-    // 三角形三个顶点坐标的x、y、z值
-    0.0, 0.0, 0.0,//顶点1坐标
-    0.5, 0.0, 0.0,//顶点2坐标
-    0.0, 0.5, 0.0,//顶点3坐标
-    0.0, 0.5, 0.0,//顶点4坐标
-    0.5, 0.5, 0.0,//顶点5坐标
-    0.5, 0.0, 0.0,//顶点6坐标
-  ]);
+  const vertexArray = getRectangle(0.64, 0.36)
   // 在gpu显存中创建一个缓冲区（顶点缓冲区）
   const vertexBuffer = device.createBuffer({
     size: vertexArray.byteLength, // //顶点数据的字节长度
@@ -140,10 +133,3 @@ onMounted(async () => {
   <canvas ref="canvas" class="container" />
 </div>
 </template>
-
-<style scoped>
-.container {
-  width: 960px;
-  height: 540px;
-}
-</style>

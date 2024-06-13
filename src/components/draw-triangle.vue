@@ -137,10 +137,3 @@ onMounted(async () => {
   <canvas ref="canvas" class="container" />
 </div>
 </template>
-
-<style scoped>
-.container {
-  width: 960px;
-  height: 540px;
-}
-</style>
