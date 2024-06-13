@@ -27,12 +27,12 @@ const getVector = (x, y, z) => {
  * @param {number} z z轴平移量
  * @returns {Float32Array} 平移矩阵
  */
-const getTranslationMatrix = (x, y, z) => {
+export const getTranslationMatrix = (x, y, z) => {
     return new Float32Array([
-        1.0, 0.0, 0.0, x,
-        0.0, 1.0, 0.0, y,
-        0.0, 0.0, 1.0, z,
-        0.0, 0.0, 0.0, 1.0,
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        x, y, z, 1,
     ])
 }
 
@@ -42,11 +42,12 @@ const getTranslationMatrix = (x, y, z) => {
  * @returns {Float32Array} 缩放矩阵
  */
 const getScalingMatrix = (factor) => {
+    const f = factor
     return new Float32Array([
-        factor, 0.0, 0.0, 0.0,
-        0.0, factor, 0.0, 0.0,
-        0.0, 0.0, factor, 0.0,
-        0.0, 0.0, 0.0, 1.0,
+        f, 0, 0, 0,
+        0, f, 0, 0,
+        0, 0, f, 0,
+        0, 0, 0, 1,
     ])
 }
 
@@ -55,15 +56,15 @@ const getScalingMatrix = (factor) => {
  * @param {number} angle 旋转角度
  * @returns {Float32Array} 绕x轴旋转的旋转矩阵
  */
-const getRotationXMatrix = (angle) => {
+export const getRotationXMatrix = (angle) => {
     const radians = angle / 180 * Math.PI
-    const sin = Math.sin(radians)
-    const cos = Math.cos(radians)
+    const s = Math.sin(radians)
+    const c = Math.cos(radians)
     return new Float32Array([
-        1.0, 0.0, 0.0, 0.0,
-        0.0, cos, -sin, 0.0,
-        0.0, sin, cos, 0.0,
-        0.0, 0.0, 0.0, 1.0,
+        1,  0,  0,  0,
+        0,  c,  s,  0,
+        0, -s,  c,  0,
+        0,  0,  0,  1,
     ])
 }
 
@@ -74,13 +75,13 @@ const getRotationXMatrix = (angle) => {
  */
 export const getRotationYMatrix = (angle) => {
     const radians = angle / 180 * Math.PI
-    const sin = Math.sin(radians)
-    const cos = Math.cos(radians)
+    const s = Math.sin(radians)
+    const c = Math.cos(radians)
     return new Float32Array([
-        cos, 0.0, sin, 0.0,
-        0.0, 1, 0.0, 0.0,
-        -sin, 0.0, cos, 0.0,
-        0.0, 0.0, 0.0, 1.0,
+        c,  0, -s,  0,
+        0,  1,  0,  0,
+        s,  0,  c,  0,
+        0,  0,  0,  1,
     ])
 }
 
@@ -89,19 +90,19 @@ export const getRotationYMatrix = (angle) => {
  * @param {number} angle 旋转角度
  * @returns {Float32Array} 绕z轴旋转的旋转矩阵
  */
-const getRotationZMatrix = (angle) => {
+export const getRotationZMatrix = (angle) => {
     const radians = angle / 180 * Math.PI
-    const sin = Math.sin(radians)
-    const cos = Math.cos(radians)
+    const s = Math.sin(radians)
+    const c = Math.cos(radians)
     return new Float32Array([
-        cos, -sin, 0.0, 0.0,
-        sin, cos, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        0.0, 0.0, 0.0, 1.0,
+         c,  s,  0,  0,
+        -s,  c,  0,  0,
+         0,  0,  1,  0,
+         0,  0,  0,  1,
     ])
 }
 
-const multiply = (...matrixs) => {
+export const multiply = (...matrixs) => {
     const twoMultiple = (matrixA, matrixB) => {
         let result = new Float32Array(16);
         result[0] = matrixA[0] * matrixB[0] + matrixA[0] * matrixB[4] + matrixA[2] * matrixB[8] + matrixA[3] * matrixB[12]
@@ -129,9 +130,9 @@ const multiply = (...matrixs) => {
 
 /**
  * 矩阵乘向量
- * @param {FlatArray} matrix 矩阵
- * @param {FlatArray} vector 向量
- * @returns {FlatArray} 向量
+ * @param {Float32Array} matrix 矩阵
+ * @param {Float32Array} vector 向量
+ * @returns {Float32Array} 向量
  */
 const multipleVector = (matrix, vector) => {
     let result = new Float32Array(4)
