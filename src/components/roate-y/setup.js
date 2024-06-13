@@ -1,17 +1,26 @@
 import { ref, onMounted, inject } from 'vue'
-import { getRotationYMatrix } from 'src/js/homogeneous.js'
+import { getRotationYMatrix, getTranslationMatrix } from 'src/js/homogeneous.js'
 import { getRectangle } from 'src/js/vertex.js'
 
 /**
- * @typedef {Object} SetupResult
+ * @typedef {Object} SetupResult setup函数的返回值类型
  * @property {import('vue/dist/vue').Ref<HTMLElement|null>} canvas canvas
  */
 
+/**
+ * @typedef {Object} MatrixBuffer 矩阵缓冲区
+ * @property {GPUBuffer} translation 平移矩阵缓冲区
+ * @property {GPUBuffer} roation 旋转矩阵缓冲区
+ */
+
+
+
 const vertexCode = /* wgsl */ `
-    @group(0) @binding(0) var<uniform> S:mat4x4<f32>;
+    @group(0) @binding(0) var<uniform> R:mat4x4<f32>;
+    @group(0) @binding(1) var<uniform> T:mat4x4<f32>;
     @vertex
     fn main(@location(0) pos: vec3<f32>) -> @builtin(position) vec4<f32>{
-      return S * vec4<f32>(pos, 1.0); // 返回顶点数据，渲染管线下个环节使用
+      return T * R * vec4<f32>(pos, 1.0); // 返回顶点数据，渲染管线下个环节使用
     }
 `
 
@@ -40,6 +49,19 @@ export default function (props, context) {
   //获取浏览器默认的颜色格式
   const format = navigator.gpu.getPreferredCanvasFormat();
   /**
+   * @type {MatrixBuffer} 矩阵缓冲区
+   */
+  let matrixBuffer = {
+    translation: device.createBuffer({
+      size: 64,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    }),
+    roation: device.createBuffer({
+      size: 64,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    }),
+  }
+  /**
    * @type {number} 旋转角度
    */
   let angle = 0
@@ -52,7 +74,7 @@ export default function (props, context) {
    * @returns {GPUBuffer} 顶点缓冲区对象
    */
   const getVertexBuffer = () => {
-    const vertexArray = getRectangle(0.64, 0.36);
+    const vertexArray = getRectangle(0.5, 0.5);
     // 在gpu显存中创建一个缓冲区（顶点缓冲区）
     const vertexBuffer = device.createBuffer({
       size: vertexArray.byteLength, // //顶点数据的字节长度
@@ -71,26 +93,27 @@ export default function (props, context) {
    * @returns {GPUBuffer} uniform缓冲区对象
    */
   const getUniformBuffer = () => {
-    const uniformArray = getRotationYMatrix(angle)
-    const uniformBuffer = device.createBuffer({
-      size: uniformArray.byteLength,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-    })
-    device.queue.writeBuffer(uniformBuffer, 0, uniformArray)
-    angle = angle + step;
-    return uniformBuffer
+    // 更新旋转矩阵缓冲区
+    device.queue.writeBuffer(matrixBuffer.roation, 0, getRotationYMatrix(angle))
+    angle = (angle + step) % 360;
+    return matrixBuffer.roation
   }
   /**
    * @param {GPURenderPipeline} pipeline 渲染管线
    * @returns {GPUBindGroup} GPUBindGroup
    */
   const getBindGroup = (pipeline) => {
+    getUniformBuffer()
     return device.createBindGroup({
       layout: pipeline.getBindGroupLayout(0),
       entries: [
         {
           binding: 0,
-          resource: { buffer: getUniformBuffer() }
+          resource: { buffer:  matrixBuffer.roation}
+        },
+        {
+          binding: 1,
+          resource: { buffer: matrixBuffer.translation }
         }
       ]
     })
@@ -191,6 +214,7 @@ export default function (props, context) {
     requestAnimationFrame(() => gpuRender({ renderPipeline, context, vertexBuffer }))
   }
   onMounted(() => {
+    device.queue.writeBuffer(matrixBuffer.translation, 0, getTranslationMatrix(0, 0, 0.5))
     gpuRender({renderPipeline: getRenderPipeline(), context: getWebgpuContext(), vertexBuffer: getVertexBuffer()})
   })
   return {
